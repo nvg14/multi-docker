@@ -1,0 +1,23 @@
+sudo: required
+
+services:
+    - docker
+
+before_install:
+    - docker build -t nvg14/multi-docker-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true nvg14/multi-docker-test npm test
+
+after_success:
+    - docker build -t nvg14/multi-client ./client
+    - docker build -t nvg14/multi-nginx ./nginx
+    - docker build -t nvg14/multi-server ./server
+    - docker build -t nvg14/multi-worker ./worker
+    # Login to docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take these images and push to dockerhub
+    - docker push nvg14/multi-client
+    - docker push nvg14/multi-nginx
+    - docker push nvg14/multi-server
+    - docker push nvg14/multi-worker
